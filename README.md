@@ -34,11 +34,9 @@ It integrates **data science, spatial analysis, and interactive visualization** 
 
 ## 📸 Dashboard Preview
 
-> *(Add your screenshots in the `outputs/` folder and they will appear here)*
-
 ![Dashboard](outputs/dashboard.png)
 ![Map](outputs/map.png)
-
+![Map](outputs/output.png)
 ---
 
 ## 🧠 Methodology
