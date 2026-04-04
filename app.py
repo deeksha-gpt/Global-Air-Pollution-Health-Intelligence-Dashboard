@@ -12,10 +12,17 @@ from streamlit_folium import st_folium
 st.set_page_config(page_title="GEOINT Dashboard", layout="wide")
 
 # -------------------------------
-# TITLE
+# TITLE + CONTEXT (IMPROVEMENT 1 + 5)
 # -------------------------------
 st.title("🌍 Global Air Pollution & Health Intelligence Dashboard")
-st.markdown("Analyze the relationship between **air pollution (PM2.5)** and **health outcomes globally**.")
+
+st.markdown(
+    "This dashboard supports **geospatial intelligence (GEOINT)** analysis by identifying environmental risk hotspots."
+)
+
+st.markdown(
+    "Built using global datasets (WHO & World Bank) to analyze the relationship between **air pollution (PM2.5)** and **health outcomes**."
+)
 
 # -------------------------------
 # LOAD DATA
@@ -31,7 +38,6 @@ pm25['country'] = pm25['country'].str.lower().str.strip()
 health['country'] = health['country'].str.lower().str.strip()
 world['name'] = world['name'].str.lower().str.strip()
 
-# Fix common mismatch
 pm25['country'] = pm25['country'].replace({
     'united states': 'united states of america'
 })
@@ -50,17 +56,17 @@ country = st.sidebar.selectbox("Select Country", sorted(df['country'].unique()))
 filtered = df[df['country'] == country]
 
 # -------------------------------
-# KPI SECTION
+# KPI SECTION (IMPROVEMENT 2 - UNITS)
 # -------------------------------
 st.subheader("📊 Key Metrics")
 
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    st.metric("🌫️ PM2.5 Level", float(filtered['pm25'].values[0]))
+    st.metric("🌫️ PM2.5 Level (µg/m³)", float(filtered['pm25'].values[0]))
 
 with col2:
-    st.metric("❤️ Mortality Rate", float(filtered['mortality_rate'].values[0]))
+    st.metric("❤️ Mortality Rate (%)", float(filtered['mortality_rate'].values[0]))
 
 with col3:
     risk = "High Risk ⚠️" if (
@@ -75,7 +81,7 @@ with col3:
 left, right = st.columns(2)
 
 # -------------------------------
-# SCATTER PLOT
+# SCATTER PLOT (IMPROVEMENT 3)
 # -------------------------------
 with left:
     st.subheader("📈 Pollution vs Mortality")
@@ -83,7 +89,6 @@ with left:
     fig, ax = plt.subplots()
     sns.scatterplot(data=df, x='pm25', y='mortality_rate', ax=ax)
 
-    # Highlight selected country
     sns.scatterplot(
         data=filtered,
         x='pm25',
@@ -94,26 +99,24 @@ with left:
         label='Selected Country'
     )
 
-    ax.set_xlabel("PM2.5")
-    ax.set_ylabel("Mortality Rate")
+    ax.set_xlabel("PM2.5 (µg/m³)")
+    ax.set_ylabel("Mortality Rate (%)")
+    ax.set_title("Higher Pollution → Higher Mortality Trend")
     ax.legend()
 
     st.pyplot(fig)
 
 # -------------------------------
-# INTERACTIVE MAP (OPTIMIZED)
+# MAP
 # -------------------------------
 with right:
     st.subheader("🗺️ Interactive Global Pollution Map")
     st.markdown("##### 🌐 Hover over countries to explore pollution & health data")
 
-    # Base map (light + fast)
     m = folium.Map(location=[20, 0], zoom_start=2, tiles="cartodbpositron")
 
-    # Fit bounds (ensures full world visible)
     m.fit_bounds([[ -60, -180 ], [ 85, 180 ]])
 
-    # Choropleth
     folium.Choropleth(
         geo_data=geo_df,
         data=geo_df,
@@ -122,19 +125,17 @@ with right:
         fill_color='Reds',
         fill_opacity=0.7,
         line_opacity=0.2,
-        legend_name='PM2.5 Levels'
+        legend_name='PM2.5 Levels (µg/m³)'
     ).add_to(m)
 
-    # Tooltip layer (lightweight)
     folium.GeoJson(
         geo_df[['geometry', 'country', 'pm25', 'mortality_rate']],
         tooltip=folium.GeoJsonTooltip(
             fields=['country', 'pm25', 'mortality_rate'],
-            aliases=['Country:', 'PM2.5:', 'Mortality Rate:']
+            aliases=['Country:', 'PM2.5 (µg/m³):', 'Mortality Rate (%):']
         )
     ).add_to(m)
 
-    # Display map
     st_folium(m, use_container_width=True, height=500)
 
 # -------------------------------
@@ -152,10 +153,17 @@ high_risk = geo_df[geo_df['high_risk']][['country', 'pm25', 'mortality_rate']]
 st.dataframe(high_risk)
 
 # -------------------------------
+# INSIGHT BOX (IMPROVEMENT 4)
+# -------------------------------
+st.info(
+    "⚠️ Insight: Regions with higher PM2.5 levels tend to show increased mortality rates, "
+    "highlighting the global health burden of air pollution."
+)
+
+# -------------------------------
 # FOOTER
 # -------------------------------
 st.markdown("---")
 st.markdown(
-    "💡 **Insight:** Countries with higher PM2.5 levels tend to show increased mortality rates, "
-    "highlighting the public health impact of air pollution."
+    "💡 This dashboard demonstrates how geospatial intelligence can support environmental risk analysis and decision-making."
 )
